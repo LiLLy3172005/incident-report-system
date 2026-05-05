@@ -2,43 +2,52 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'name', 'phone', 'password', 'role', 'strikes', 'is_banned'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
-        'password',
-        'remember_token',
+        'password', 'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    // Relationships
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
+
+    public function statusHistories()
+    {
+        return $this->hasMany(ReportStatusHistory::class, 'changed_by_user_id');
+    }
+
+    // Methods
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function canReport()
+    {
+        return !$this->is_banned && $this->strikes < 3;
+    }
+
+    public function addStrike()
+    {
+        $this->increment('strikes');
+        if ($this->strikes >= 3) {
+            $this->is_banned = true;
+            $this->save();
+        }
+    }
 }
