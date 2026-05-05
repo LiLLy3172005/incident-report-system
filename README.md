@@ -64,3 +64,62 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+
+# Hệ thống tiếp nhận và lọc báo cáo sự cố công cộng
+
+## 📋 Mô tả đồ án
+Hệ thống cho phép người dân gửi báo cáo sự cố (cháy nổ, tai nạn, trộm cắp...) kèm theo ghi âm giọng nói. Hệ thống sử dụng AI để phát hiện giọng nói giả mạo (deepfake) trước khi chuyển đến cơ quan chức năng.
+
+## 🛠️ Công nghệ sử dụng
+- **Backend**: Laravel 9 (PHP)
+- **Database**: MySQL
+- **Frontend**: Laravel Blade + Tailwind CSS + Alpine.js
+- **AI Service**: Python FastAPI với TensorFlow
+- **Storage**: Cloudinary
+- **Queue**: Laravel Queue (Database driver)
+
+## 🚀 Tính năng chính
+### Người dân
+- Đăng ký/Đăng nhập bằng số điện thoại
+- Gửi báo cáo sự cố kèm ghi âm
+- Xem lịch sử báo cáo
+- Báo cáo ẩn danh
+
+### Quản trị viên
+- Dashboard thống kê
+- Quản lý báo cáo (duyệt/từ chối)
+- Phát hiện báo cáo giả mạo qua AI
+- Quản lý người dùng (khóa tài khoản)
+
+## 📦 Cài đặt
+
+### Yêu cầu
+- PHP 8.1+
+- Composer
+- MySQL
+- Node.js & NPM
+
+### Các bước cài đặt
+```bash
+# Clone project
+git clone https://github.com/TEN_GITHUB_CUA_BAN/incident-report-system.git
+
+# Cài dependencies
+composer install
+npm install
+
+# Copy env file
+cp .env.example .env
+
+# Tạo key
+php artisan key:generate
+
+# Chạy migration
+php artisan migrate
+php artisan db:seed
+
+# Chạy development server
+php artisan serve
+npm run dev
