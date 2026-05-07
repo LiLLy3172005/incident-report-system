@@ -1,14 +1,21 @@
-/** @type {import('tailwindcss').Config} */
+const defaultTheme = require('tailwindcss/defaultTheme');
+
 module.exports = {
-  content: [
-    "./resources/**/*.blade.php",
-    "./resources/**/*.js",
-    "./resources/**/*.vue",
-    "./app/View/Components/**/*.php",
-    "./app/Http/Livewire/**/*.php",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
+    content: [
+        "./resources/**/*.blade.php",
+        "./resources/**/*.js",
+        "./resources/**/*.vue",
+    ],
+    theme: {
+        extend: {
+            colors: {
+                primary: '#dc2626',
+                secondary: '#3b82f6',
+            },
+            screens: {
+                'xs': '475px',
+            }
+        },
+    },
+    plugins: [],
+}; 
