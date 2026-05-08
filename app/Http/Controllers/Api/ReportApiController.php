@@ -17,7 +17,7 @@ class ReportApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'category_id' => 'required|exists:incident_categories,id',
-            'audio' => 'required|file|mimes:webm,wav,mp3,m4a|max:20480',
+'audio' => 'required|file|mimes:webm,wav,mp3,m4a,mp4,ogg|max:20480',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'address_text' => 'nullable|string|max:255',
