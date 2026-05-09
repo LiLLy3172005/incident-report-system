@@ -11,9 +11,11 @@
     /* Font cho tiêu đề lớn - dùng Montserrat Extra Bold */
     .font-display {
         font-family: 'Montserrat', sans-serif;
-        font-weight: 700;
-        letter-spacing: 0.02em;
+        font-weight: 900;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
+            display: inline; /* hoặc inline-block */
+
     }
     
     /* Font cho tiêu đề phụ */
@@ -200,81 +202,167 @@
         </div>
     </div>
 </div>
+<!-- ============================================ -->
+<!-- SECTION 2: BA CỘT LỚN - TĂNG CHIỀU CAO -->
+<!-- ============================================ -->
+<style>
+    .feature-column {
+        min-height: 420px; /* Tăng chiều cao tối thiểu */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    /* Thêm khoảng cách cho text */
+    .feature-description {
+        min-height: 60px; /* Đảm bảo mô tả có chiều cao tối thiểu */
+        line-height: 1.8;
+    }
+</style>
 
-<!-- ============================================ -->
-<!-- SECTION 2: BA CỘT LỚN -->
-<!-- ============================================ -->
-<div class="bg-white py-20">
+<div class="bg-white py-28">
     <div class="container mx-auto px-4">
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="text-center p-8">
-                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <div class="text-3xl">🤝</div>
+        <div class="grid md:grid-cols-3 gap-10">
+            
+            <!-- Cột 1 -->
+            <div class="feature-column text-center p-12 group hover:bg-gray-50 rounded-2xl transition-all duration-300 hover:shadow-xl">
+                <div class="w-32 h-32 mx-auto mb-10 rounded-full overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-300 group-hover:scale-110">
+                    <img src="{{ asset('images/tieu1.png') }}" 
+                         alt="Xây dựng niềm tin" 
+                         class="w-full h-full object-cover">
                 </div>
-                <h3 class="font-heading text-2xl text-gray-800 mb-3">XÂY DỰNG<br>NIỀM TIN</h3>
-                <p class="text-gray-500">Minh bạch và trung thực trong mọi báo cáo</p>
+                
+                <h3 class="font-display text-2xl text-gray-900 mb-5 leading-tight">
+                    XÂY DỰNG<br>NIỀM TIN
+                </h3>
+                
+                <p class="text-gray-600 text-base leading-relaxed max-w-sm mx-auto feature-description">
+                    Minh bạch và trung thực trong mọi báo cáo từ cộng đồng, đảm bảo thông tin chính xác và kịp thời
+                </p>
             </div>
-            <div class="text-center p-8 border-x border-gray-100">
-                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <div class="text-3xl">❤️</div>
+            
+            <!-- Cột 2 -->
+            <div class="feature-column text-center p-12 group hover:bg-gray-50 rounded-2xl transition-all duration-300 hover:shadow-xl border-x border-gray-100">
+                <div class="w-32 h-32 mx-auto mb-10 rounded-full overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-300 group-hover:scale-110">
+                    <img src="{{ asset('images/tieu2.png') }}" 
+                         alt="Cứu sống con người" 
+                         class="w-full h-full object-cover">
                 </div>
-                <h3 class="font-heading text-2xl text-gray-800 mb-3">CỨU SỐNG<br>CON NGƯỜI</h3>
-                <p class="text-gray-500">Phản ứng nhanh chóng trước mọi sự cố</p>
+                
+                <h3 class="font-display text-2xl text-gray-900 mb-5 leading-tight">
+                    CỨU SỐNG<br>CON NGƯỜI
+                </h3>
+                
+                <p class="text-gray-600 text-base leading-relaxed max-w-sm mx-auto feature-description">
+                    Phản ứng nhanh chóng trước mọi sự cố khẩn cấp, đội ngũ luôn sẵn sàng hỗ trợ 24/7
+                </p>
             </div>
-            <div class="text-center p-8">
-                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <div class="text-3xl">🛡️</div>
+            
+            <!-- Cột 3 -->
+            <div class="feature-column text-center p-12 group hover:bg-gray-50 rounded-2xl transition-all duration-300 hover:shadow-xl">
+                <div class="w-32 h-32 mx-auto mb-10 rounded-full overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-300 group-hover:scale-110">
+                    <img src="{{ asset('images/tieu3.png') }}" 
+                         alt="An toàn cộng đồng" 
+                         class="w-full h-full object-cover">
                 </div>
-                <h3 class="font-heading text-2xl text-gray-800 mb-3">AN TOÀN<br>CỘNG ĐỒNG</h3>
-                <p class="text-gray-500">Cam kết bảo vệ an toàn cho mọi người</p>
+                
+                <h3 class="font-display text-2xl text-gray-900 mb-5 leading-tight">
+                    AN TOÀN<br>CỘNG ĐỒNG
+                </h3>
+                
+                <p class="text-gray-600 text-base leading-relaxed max-w-sm mx-auto feature-description">
+                    Cam kết bảo vệ an toàn cho mọi người dân, xây dựng môi trường sống an lành
+                </p>
             </div>
+            
         </div>
     </div>
 </div>
-
 <!-- ============================================ -->
-<!-- SECTION 3: "WHAT WE OFFER" -->
+<!-- SECTION 3: "WHAT WE OFFER" - ĐÃ ĐIỀU CHỈNH -->
 <!-- ============================================ -->
 <div class="bg-gray-50 py-24">
     <div class="container mx-auto px-4">
         <div class="grid md:grid-cols-2 gap-16 items-center">
+            
+            <!-- CỘT TRÁI: NỘI DUNG -->
             <div>
-                <div class="text-red-500 font-semibold text-sm mb-4 tracking-[0.2em] uppercase">DỊCH VỤ CỦA CHÚNG TÔI</div>
-                <h2 class="font-display section-title-large text-gray-900 mb-6">
-                    Những gì chúng tôi<br>cung cấp
-                </h2>
-                <p class="text-gray-600 mb-8">Hệ thống toàn diện giúp báo cáo và xử lý sự cố nhanh chóng</p>
+                <!-- Label nhỏ -->
+                <div class="tracking-label text-red-500 mb-6">
+                    DỊCH VỤ CỦA CHÚNG TÔI
+                </div>
                 
-                <div class="space-y-6">
-                    <div class="flex gap-4">
-                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-xl">🎙️</div>
+                <!-- Tiêu đề chính - "NHỮNG GÌ CHÚNG TÔI" TRÊN 1 DÒNG -->
+                <h2 class="font-display text-gray-900 mb-6" style="font-size: clamp(2.2rem, 5vw, 3.8rem); line-height: 1.1; font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase;">
+                    MANG ĐẾN CHO<br>NGƯỜI DÙNG 
+                </h2>
+                
+                <!-- Mô tả ngắn gọn -->
+                <p class="text-gray-600 text-base leading-relaxed mb-10 max-w-lg">
+                    Hệ thống toàn diện giúp báo cáo và xử lý sự cố nhanh chóng, chính xác.
+                </p>
+                
+                <!-- Danh sách tính năng -->
+                <div class="space-y-7">
+                    
+                    <!-- Tính năng 1: Ghi âm -->
+                    <div class="flex gap-4 group">
+                        <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 group-hover:bg-red-200 transition-all duration-300 group-hover:scale-110">
+                            🎙️
+                        </div>
                         <div>
-                            <h4 class="font-bold text-gray-800">Ghi âm trực tiếp</h4>
-                            <p class="text-gray-500 text-sm">Ghi âm mô tả sự cố bằng giọng nói</p>
+                            <h4 class="font-heading text-lg text-gray-900 mb-1">GHI ÂM TRỰC TIẾP</h4>
+                            <p class="text-gray-500 text-sm leading-relaxed">Mô tả sự cố bằng giọng nói ngay tại hiện trường</p>
                         </div>
                     </div>
-                    <div class="flex gap-4">
-                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-xl">🤖</div>
+                    
+                    <!-- Tính năng 2: AI -->
+                    <div class="flex gap-4 group">
+                        <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 group-hover:bg-red-200 transition-all duration-300 group-hover:scale-110">
+                            🤖
+                        </div>
                         <div>
-                            <h4 class="font-bold text-gray-800">AI phát hiện Deepfake</h4>
-                            <p class="text-gray-500 text-sm">Phân tích và phát hiện giọng nói giả mạo</p>
+                            <h4 class="font-heading text-lg text-gray-900 mb-1">AI PHÁT HIỆN DEEPFAKE</h4>
+                            <p class="text-gray-500 text-sm leading-relaxed">Phân tích và phát hiện giọng nói giả mạo với độ chính xác cao</p>
                         </div>
                     </div>
-                    <div class="flex gap-4">
-                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-xl">📍</div>
-                        <div>
-                            <h4 class="font-bold text-gray-800">Định vị GPS</h4>
-                            <p class="text-gray-500 text-sm">Xác định chính xác vị trí sự cố</p>
+                    
+                    <!-- Tính năng 3: Định vị -->
+                    <div class="flex gap-4 group">
+                        <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 group-hover:bg-red-200 transition-all duration-300 group-hover:scale-110">
+                            📍
                         </div>
+                        <div>
+                            <h4 class="font-heading text-lg text-gray-900 mb-1">ĐỊNH VỊ GPS</h4>
+                            <p class="text-gray-500 text-sm leading-relaxed">Xác định chính xác vị trí sự cố để phản ứng kịp thời</p>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <!-- CỘT PHẢI: ẢNH -->
+            <div class="relative">
+                <!-- Khung ảnh chính -->
+                <div class="rounded-3xl overflow-hidden shadow-2xl relative">
+                    <img src="{{ asset('images/back2-r2.jpg') }}" 
+                         alt="Hệ thống báo cáo sự cố" 
+                         class="w-full h-auto object-cover"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    
+                    <!-- Fallback -->
+                    
+                </div>
+                
+                <!-- Badge nổi -->
+                <div class="absolute -top-4 -right-4 bg-red-600 text-white px-5 py-2.5 rounded-2xl shadow-2xl">
+                    <div class="text-center">
+                        <div class="text-xl font-display">24/7</div>
+                        <div class="text-[10px] font-medium tracking-wider">HOẠT ĐỘNG</div>
                     </div>
                 </div>
             </div>
             
-            <div class="image-placeholder rounded-2xl overflow-hidden shadow-2xl">
-                <div class="bg-cover bg-center w-full h-96 opacity-60"
-                     style="background-image: url('{{ asset('images/bak11.jpg') }}');">
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -288,14 +376,16 @@
             <div class="order-2 md:order-1">
                 <div class="image-placeholder rounded-2xl overflow-hidden">
                     <div class="bg-cover bg-center w-full h-80 opacity-50"
-                         style="background-image: url('{{ asset('images/bak11.jpg') }}');">
+                         style="background-image: url('{{ asset('images/back3.jpg') }}');">
                     </div>
                 </div>
             </div>
             <div class="order-1 md:order-2">
                 <div class="text-red-500 font-semibold text-sm mb-4 tracking-[0.2em] uppercase">QUY TRÌNH LÀM VIỆC</div>
-                <h2 class="font-display section-title-large mb-6">
-                    Cách chúng tôi<br>làm việc
+                
+                <!-- THÊM mb-10 ĐỂ GIÃN KHOẢNG CÁCH -->
+                <h2 class="font-display section-title-large mb-10" style="white-space: nowrap;">
+                    CÁCH CHÚNG TÔI<br>LÀM VIỆC
                 </h2>
                 
                 <div class="space-y-6">

@@ -7,13 +7,13 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Báo cáo sự cố công cộng')</title>
     
-    <!-- Google Fonts - Đồng bộ với home.blade.php -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Cấu hình Tailwind - Đồng bộ font -->
+    <!-- Cấu hình Tailwind -->
     <script>
         tailwind.config = {
             theme: {
@@ -44,19 +44,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
-        /* Reset & Base */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0f172a;
         }
         
-        /* === FONT CLASSES ĐỒNG BỘ === */
         .font-heading {
             font-family: 'Montserrat', sans-serif;
             font-weight: 800;
@@ -78,7 +72,6 @@
             text-transform: uppercase;
         }
         
-        /* Header trong suốt - Fixed */
         .header-transparent {
             position: fixed;
             top: 0;
@@ -89,7 +82,6 @@
             padding: 0.75rem 0;
         }
         
-        /* Khi scroll thì đổi màu */
         .header-scrolled {
             background: rgba(15, 23, 42, 0.95) !important;
             backdrop-filter: blur(12px);
@@ -97,7 +89,6 @@
             padding: 0.5rem 0;
         }
         
-        /* Logo container */
         .logo-container {
             display: flex;
             align-items: center;
@@ -105,9 +96,7 @@
             transition: all 0.3s ease;
         }
         
-        .logo-container:hover {
-            transform: scale(1.02);
-        }
+        .logo-container:hover { transform: scale(1.02); }
         
         .logo-img {
             height: 60px;
@@ -115,7 +104,6 @@
             transition: all 0.3s ease;
         }
         
-        /* Menu item hover effect */
         .nav-link {
             position: relative;
             transition: color 0.3s ease;
@@ -135,11 +123,18 @@
             transition: width 0.3s ease;
         }
         
-        .nav-link:hover::after {
-            width: 100%;
+        .nav-link:hover::after { width: 100%; }
+        
+        /* Admin link đặc biệt */
+        .nav-link-admin {
+            color: #fbbf24 !important; /* Màu vàng gold cho Admin */
+            font-weight: 700;
         }
         
-        /* Avatar */
+        .nav-link-admin::after {
+            background-color: #fbbf24 !important;
+        }
+        
         .avatar {
             width: 36px;
             height: 36px;
@@ -152,39 +147,12 @@
             font-family: 'Montserrat', sans-serif;
         }
         
-        /* Dropdown animation */
-        .dropdown-enter {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        
-        .dropdown-enter-active {
-            opacity: 1;
-            transform: translateY(0);
-            transition: all 0.2s ease;
-        }
-        
-        /* Button styles */
-        .btn-outline-light {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-light:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.4);
-        }
-        
-        /* Button text */
         .btn-text {
             font-family: 'Montserrat', sans-serif;
             font-weight: 700;
             letter-spacing: 0.02em;
         }
         
-        /* Flash message */
         .flash-message {
             font-family: 'Inter', sans-serif;
             font-weight: 500;
@@ -192,31 +160,28 @@
         
         [x-cloak] { display: none !important; }
         
-        /* Responsive logo */
         @media (max-width: 768px) {
-            .logo-img {
-                height: 32px;
-            }
+            .logo-img { height: 32px; }
         }
     </style>
     
     @stack('styles')
 </head>
 <body class="font-sans antialiased">
-    <!-- Header trong suốt với hiệu ứng scroll -->
+    <!-- Header -->
     <header x-data="{ scrolled: false }" 
             x-init="window.addEventListener('scroll', () => { scrolled = window.scrollY > 50 })"
             :class="scrolled ? 'header-scrolled' : 'header-transparent'"
             class="header-transparent">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center">
-                <!-- Logo - Đã thay thế bằng logo.png -->
+                
+                <!-- Logo -->
                 <a href="{{ route('home') }}" class="logo-container group">
                     <img src="{{ asset('images/logo.png') }}" 
                          alt="Logo" 
                          class="logo-img"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <!-- Fallback nếu logo không load được -->
                     <span class="text-2xl hidden transform group-hover:scale-110 transition">🚨</span>
                     <span class="text-xl font-display text-white tracking-tight">
                         Báo cáo<span class="text-brand-red"> sự cố</span>
@@ -227,14 +192,17 @@
                 <div class="hidden md:flex items-center space-x-8">
                     @auth
                         <a href="{{ route('reports.create') }}" class="nav-link text-white/90 hover:text-white text-sm">
-                            Gửi báo cáo
+                            📝 Gửi báo cáo
                         </a>
                         <a href="{{ route('reports.my') }}" class="nav-link text-white/90 hover:text-white text-sm">
-                            Lịch sử
+                            📋 Lịch sử
                         </a>
+                        
+                        {{-- === ADMIN LINK NỔI BẬT === --}}
                         @if(auth()->user()->role === 'admin')
-                            <a href="{{ route('admin.dashboard') }}" class="nav-link text-white/90 hover:text-white text-sm">
-                                Admin
+                            <a href="{{ route('admin.dashboard') }}" 
+                               class="nav-link nav-link-admin text-sm flex items-center gap-1">
+                                <span>⚙️</span> Admin
                             </a>
                         @endif
                     @endauth
@@ -259,6 +227,7 @@
                                 </svg>
                             </button>
                             
+                            <!-- Dropdown -->
                             <div x-show="dropdownOpen" 
                                  @click.away="dropdownOpen = false"
                                  x-transition:enter="transition ease-out duration-200"
@@ -267,28 +236,44 @@
                                  class="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-2xl z-50 overflow-hidden"
                                  x-cloak>
                                 <div class="py-2">
+                                    <!-- User Info -->
                                     <div class="px-4 py-3 border-b border-gray-100">
                                         <p class="font-heading text-sm text-gray-800">{{ auth()->user()->name }}</p>
                                         <p class="text-xs text-gray-500">{{ auth()->user()->phone }}</p>
+                                        @if(auth()->user()->role === 'admin')
+                                            <span class="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-[10px] font-bold">
+                                                ADMIN
+                                            </span>
+                                        @endif
                                     </div>
+                                    
                                     <a href="{{ route('reports.my') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition font-medium">
                                         <span class="mr-3 text-lg">📋</span> Lịch sử báo cáo
                                     </a>
                                     <a href="{{ route('reports.create') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition font-medium">
                                         <span class="mr-3 text-lg">📝</span> Gửi báo cáo mới
                                     </a>
+                                    
+                                    {{-- === ADMIN MENU TRONG DROPDOWN === --}}
                                     @if(auth()->user()->role === 'admin')
-                                        <a href="{{ route('admin.dashboard') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition font-medium">
-                                            <span class="mr-3 text-lg">⚙️</span> Quản trị hệ thống
-                                        </a>
+                                        <div class="border-t border-gray-100 mt-1 pt-1">
+                                            <div class="px-4 py-1 text-[10px] text-gray-400 uppercase tracking-wider font-bold">Admin Panel</div>
+                                            <a href="{{ route('admin.dashboard') }}" class="flex items-center px-4 py-2.5 text-sm text-yellow-600 hover:bg-yellow-50 transition font-medium">
+                                                <span class="mr-3 text-lg">📊</span> Dashboard
+                                            </a>
+                                            <a href="{{ route('admin.reports.index') }}" class="flex items-center px-4 py-2.5 text-sm text-yellow-600 hover:bg-yellow-50 transition font-medium">
+                                                <span class="mr-3 text-lg">📋</span> Quản lý báo cáo
+                                            </a>
+                                        </div>
                                     @endif
+                                    
                                     <hr class="my-1 border-gray-100">
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium">
-                                            <span class="mr-3 text-lg">🚪</span> Đăng xuất
-                                        </button>
-                                    </form>
+                                    
+                                    {{-- Logout --}}
+                                    <a href="{{ route('logout') }}" 
+                                       class="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium">
+                                        <span class="mr-3 text-lg">🚪</span> Đăng xuất
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -305,7 +290,7 @@
         </div>
     </header>
     
-    <!-- Main Content - Có padding top để tránh bị header che -->
+    <!-- Main Content -->
     <main class="min-h-screen">
         @if(session('success'))
             <div class="flash-message fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-pulse">
@@ -326,7 +311,7 @@
         @yield('content')
     </main>
     
-    <!-- Footer nhẹ nhàng -->
+    <!-- Footer -->
     <footer class="bg-brand-dark/90 backdrop-blur-sm text-white/70 py-8 mt-12">
         <div class="container mx-auto px-4 text-center text-sm font-medium">
             <p>© 2025 Hệ thống báo cáo sự cố cộng đồng. Bảo vệ bởi công nghệ AI.</p>
@@ -334,7 +319,7 @@
     </footer>
     
     <script>
-        // Auto hide flash messages after 5 seconds
+        // Auto hide flash messages
         setTimeout(() => {
             const alerts = document.querySelectorAll('.fixed.top-20');
             alerts.forEach(alert => {

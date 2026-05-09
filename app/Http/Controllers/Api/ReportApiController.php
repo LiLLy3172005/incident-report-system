@@ -7,17 +7,22 @@ use App\Models\Report;
 use App\Models\IncidentCategory;
 use App\Jobs\ProcessAudioAIJob;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ReportApiController extends Controller
 {
-    public function store(Request $request)
+    /**
+     * Store a new report via API.
+     */
+    public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'category_id' => 'required|exists:incident_categories,id',
-'audio' => 'required|file|mimes:webm,wav,mp3,m4a,mp4,ogg|max:20480',
+            'audio' => 'required|file|mimes:webm,wav,mp3,m4a,mp4,ogg|max:20480',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'address_text' => 'nullable|string|max:255',
@@ -34,9 +39,10 @@ class ReportApiController extends Controller
 
         try {
             $audioFile = $request->file('audio');
-            
+
+            // Upload audio
             if (!env('CLOUDINARY_URL')) {
-                $audioPath = $audioFile->store('audio', 'public');
+                $audioPath = $audioFile->store('reports/audio', 'public');
                 $audioUrl = asset('storage/' . $audioPath);
             } else {
                 $uploadResult = Cloudinary::upload($audioFile->getRealPath(), [
@@ -46,6 +52,7 @@ class ReportApiController extends Controller
                 $audioUrl = $uploadResult->getSecurePath();
             }
 
+            // Tạo report
             $report = Report::create([
                 'user_id' => $request->boolean('is_anonymous', false) ? null : Auth::id(),
                 'category_id' => $request->category_id,
@@ -55,18 +62,28 @@ class ReportApiController extends Controller
                 'address_text' => $request->address_text,
                 'description' => $request->description,
                 'status' => 'pending',
-                'ai_label' => 'UNTESTED',
+                'ai_label' => 'PROCESSING', // ← Đổi thành PROCESSING
+                'ai_confidence' => null,
             ]);
 
+            // ✅ Dispatch AI Job
             ProcessAudioAIJob::dispatch($report);
+            
+            Log::info("Report #{$report->id} created via API, AI job dispatched");
 
             return response()->json([
                 'success' => true,
-                'message' => 'Báo cáo đã được gửi thành công!',
-                'data' => $report
+                'message' => 'Báo cáo đã được gửi! AI đang phân tích...',
+                'data' => [
+                    'id' => $report->id,
+                    'status' => $report->status,
+                    'ai_label' => $report->ai_label,
+                ]
             ], 201);
 
         } catch (\Exception $e) {
+            Log::error('API Report Store Error: ' . $e->getMessage());
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
@@ -74,7 +91,10 @@ class ReportApiController extends Controller
         }
     }
 
-    public function userReports(Request $request)
+    /**
+     * Get user's reports.
+     */
+    public function userReports(Request $request): JsonResponse
     {
         $reports = Report::with('category')
             ->where('user_id', Auth::id())
@@ -87,6 +107,8 @@ class ReportApiController extends Controller
                     'category_color' => $report->category->color_code,
                     'status' => $report->status,
                     'status_text' => $this->getStatusText($report->status),
+                    'ai_label' => $report->ai_label,
+                    'ai_confidence' => $report->ai_confidence,
                     'created_at' => $report->created_at->format('d/m/Y H:i'),
                     'address' => $report->address_text,
                 ];
@@ -98,8 +120,10 @@ class ReportApiController extends Controller
         ]);
     }
 
-    // ✅ ĐÃ FIX: Thêm string type cho $id
-    public function show(string $id): \Illuminate\Http\JsonResponse
+    /**
+     * Show report detail.
+     */
+    public function show(string $id): JsonResponse
     {
         $report = Report::with('category', 'statusHistories')
             ->where('user_id', Auth::id())
@@ -117,13 +141,17 @@ class ReportApiController extends Controller
                 'description' => $report->description,
                 'status' => $report->status,
                 'status_text' => $this->getStatusText($report->status),
+                'ai_label' => $report->ai_label,
+                'ai_confidence' => $report->ai_confidence,
                 'created_at' => $report->created_at->format('d/m/Y H:i'),
                 'histories' => $report->statusHistories,
             ]
         ]);
     }
 
-    // ✅ ĐÃ FIX: Thêm string type cho $status
+    /**
+     * Get status text in Vietnamese.
+     */
     private function getStatusText(string $status): string
     {
         return match($status) {

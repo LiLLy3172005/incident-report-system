@@ -12,9 +12,15 @@
     .radio-card.active { border-color: #dc2626; background-color: #fef2f2; box-shadow: 0 4px 12px rgba(220,38,38,0.15); }
     .recording-wave { animation: pulse 1.5s ease-in-out infinite; }
     @keyframes pulse { 0%,100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.1); opacity:0.7; } }
+    
+    /* Mapbox marker fix */
+    .mapboxgl-marker { cursor: pointer; }
+    #map { min-height: 320px; border-radius: 0.75rem; }
 </style>
 
-{{-- ✅ FIX 1: Thêm x-data vào đây --}}
+{{-- Mapbox GL CSS --}}
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4" x-data="reportApp()">
     <div class="max-w-2xl mx-auto">
         <!-- Header -->
@@ -107,14 +113,13 @@
             </div>
         </div>
 
-        <!-- STEP 2 -->
+        <!-- STEP 2: VỊ TRÍ - MAPBOX -->
         <div x-show="currentStep === 2" class="form-step">
             <div class="bg-white rounded-2xl shadow-sm p-6">
                 <h3 class="text-xl font-bold text-gray-800 mb-6">📍 Bước 2: Xác định vị trí</h3>
                 <div class="mb-4">
-                    {{-- ✅ FIX 2: map cần min-height kể cả khi đang load --}}
-                    <div id="map" style="min-height: 320px;" class="w-full rounded-xl border-2 border-gray-200 mb-3 bg-gray-100 flex items-center justify-center">
-                        <span class="text-gray-400 text-sm" x-show="!formData.latitude">Đang tải bản đồ...</span>
+                    <div id="map" class="w-full rounded-xl border-2 border-gray-200 mb-3 bg-gray-100 flex items-center justify-center">
+                        <span class="text-gray-400 text-sm">Đang tải bản đồ...</span>
                     </div>
                     <button type="button" @click="getCurrentLocation" class="text-red-600 text-sm font-semibold">
                         🔄 Lấy lại vị trí hiện tại
@@ -140,15 +145,10 @@
             </div>
         </div>
 
-        <!-- STEP 3 -->
+        <!-- STEP 3: GHI ÂM -->
         <div x-show="currentStep === 3" class="form-step">
             <div class="bg-white rounded-2xl shadow-sm p-6">
                 <h3 class="text-xl font-bold text-gray-800 mb-6">🎙️ Bước 3: Ghi âm mô tả</h3>
-
-                {{-- ✅ FIX 3: Hiển thị cảnh báo nếu không phải HTTPS --}}
-                <div x-show="!isSecureContext" class="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-xl text-yellow-700 text-sm">
-                    ⚠️ Ghi âm yêu cầu kết nối <strong>HTTPS</strong>. Nếu bạn đang chạy trên HTTP, tính năng này sẽ không hoạt động.
-                </div>
 
                 <div class="text-center py-8">
                     <template x-if="!isRecording && !audioUrl">
@@ -203,12 +203,14 @@
 </div>
 
 @push('scripts')
+{{-- Mapbox GL JS --}}
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+
 <script>
 function reportApp() {
     return {
         currentStep: 1,
         isSubmitting: false,
-        // ✅ FIX 4: Kiểm tra HTTPS cho ghi âm
         isSecureContext: window.isSecureContext,
         formData: {
             category_id: '',
@@ -228,8 +230,6 @@ function reportApp() {
         map: null,
         marker: null,
 
-        // ✅ FIX 5: init() KHÔNG gọi getCurrentLocation ngay
-        // Map chỉ init khi user vào step 2
         init() {},
 
         async nextStep() {
@@ -240,7 +240,6 @@ function reportApp() {
                     return;
                 }
                 this.currentStep = 2;
-                // ✅ FIX 6: Đợi DOM render xong mới init map
                 this.$nextTick(() => {
                     this.getCurrentLocation();
                 });
@@ -273,7 +272,6 @@ function reportApp() {
             formData.append('latitude', this.formData.latitude);
             formData.append('longitude', this.formData.longitude);
             formData.append('address_text', this.formData.address_text);
-            // ✅ FIX 7: Gửi đúng MIME type - dùng webm hoặc fallback
             const mimeType = this.audioBlob.type || 'audio/webm';
             const ext = mimeType.includes('mp4') ? 'mp4' : (mimeType.includes('ogg') ? 'ogg' : 'webm');
             formData.append('audio', this.audioBlob, `recording.${ext}`);
@@ -317,7 +315,6 @@ function reportApp() {
                 pos => {
                     this.formData.latitude = pos.coords.latitude;
                     this.formData.longitude = pos.coords.longitude;
-                    // ✅ FIX 8: Đảm bảo div map đã có kích thước trước khi init
                     this.$nextTick(() => {
                         this.initMap();
                         Swal.close();
@@ -334,57 +331,93 @@ function reportApp() {
             );
         },
 
+        // ============================================
+        // MAPBOX INIT - MIỄN PHÍ
+        // ============================================
         initMap() {
             const mapEl = document.getElementById('map');
             if (!mapEl || !this.formData.latitude || !this.formData.longitude) return;
 
-            const position = {
-                lat: parseFloat(this.formData.latitude),
-                lng: parseFloat(this.formData.longitude)
-            };
+            // Set Mapbox token
+            mapboxgl.accessToken = 'pk.eyJ1IjoiaHV5bmhsdXVseSIsImEiOiJjbW95MHdjeGwwMHA2MnFwd3Z6MDRocDl4In0.-bFIJFLNLJ4aO-Y33GP3aA';
+
+            const lng = parseFloat(this.formData.longitude);
+            const lat = parseFloat(this.formData.latitude);
 
             if (this.map) {
-                this.map.setCenter(position);
-                this.marker.setPosition(position);
+                // Nếu map đã tồn tại, chỉ cần di chuyển
+                this.map.flyTo({ center: [lng, lat], zoom: 15 });
+                this.marker.setLngLat([lng, lat]);
             } else {
-                this.map = new google.maps.Map(mapEl, {
-                    center: position,
+                // Khởi tạo map mới
+                this.map = new mapboxgl.Map({
+                    container: 'map',
+                    style: 'mapbox://styles/mapbox/streets-v12', // Style đẹp
+                    center: [lng, lat],
                     zoom: 15,
                 });
-                this.marker = new google.maps.Marker({
-                    position: position,
-                    map: this.map,
+
+                // Thêm navigation control (zoom +, -)
+                this.map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+                // Tạo marker có thể kéo
+                this.marker = new mapboxgl.Marker({
                     draggable: true,
-                    animation: google.maps.Animation.DROP,
+                    color: '#dc2626', // Màu đỏ
+                })
+                .setLngLat([lng, lat])
+                .addTo(this.map);
+
+                // Khi kéo marker xong
+                this.marker.on('dragend', () => {
+                    const lngLat = this.marker.getLngLat();
+                    this.formData.longitude = lngLat.lng;
+                    this.formData.latitude = lngLat.lat;
+                    this.reverseGeocode();
                 });
-                google.maps.event.addListener(this.marker, 'dragend', (event) => {
-                    this.formData.latitude = event.latLng.lat();
-                    this.formData.longitude = event.latLng.lng();
+
+                // Khi click vào map -> di chuyển marker
+                this.map.on('click', (e) => {
+                    this.marker.setLngLat(e.lngLat);
+                    this.formData.longitude = e.lngLat.lng;
+                    this.formData.latitude = e.lngLat.lat;
                     this.reverseGeocode();
                 });
             }
+
             this.reverseGeocode();
         },
 
-        reverseGeocode() {
+        // ============================================
+        // REVERSE GEOCODE - MAPBOX (MIỄN PHÍ)
+        // ============================================
+        async reverseGeocode() {
             if (!this.formData.latitude || !this.formData.longitude) return;
-            const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({
-                location: {
-                    lat: parseFloat(this.formData.latitude),
-                    lng: parseFloat(this.formData.longitude)
+
+            try {
+                const lng = this.formData.longitude;
+                const lat = this.formData.latitude;
+
+                // Dùng Mapbox Geocoding API (đã bao gồm trong free tier)
+                const response = await fetch(
+                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}&language=vi`
+                );
+                const data = await response.json();
+
+                if (data.features && data.features.length > 0) {
+                    this.formData.address_text = data.features[0].place_name;
                 }
-            }, (results, status) => {
-                if (status === 'OK' && results[0]) {
-                    this.formData.address_text = results[0].formatted_address;
-                }
-            });
+            } catch (error) {
+                console.log('Không thể lấy địa chỉ:', error);
+            }
         },
 
+        // ============================================
+        // GHI ÂM
+        // ============================================
         async startRecording() {
-            // ✅ FIX 9: Kiểm tra HTTPS / secure context
             if (!window.isSecureContext) {
-                Swal.fire('Lỗi', 'Ghi âm chỉ hoạt động trên HTTPS. Vui lòng dùng HTTPS hoặc localhost.', 'error');
+                Swal.fire('Lỗi', 'Ghi âm chỉ hoạt động trên HTTPS hoặc localhost.', 'error');
                 return;
             }
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -394,7 +427,6 @@ function reportApp() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                // ✅ FIX 10: Chọn MIME type được hỗ trợ
                 const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
                     ? 'audio/webm;codecs=opus'
                     : MediaRecorder.isTypeSupported('audio/webm')
@@ -415,15 +447,15 @@ function reportApp() {
                     clearInterval(this.timer);
                 };
 
-                this.mediaRecorder.start(100); // collect data every 100ms
+                this.mediaRecorder.start(100);
                 this.isRecording = true;
                 this.recordingTime = 0;
                 this.timer = setInterval(() => this.recordingTime++, 1000);
 
             } catch (err) {
                 let msg = err.message;
-                if (err.name === 'NotAllowedError') msg = 'Bạn đã từ chối quyền truy cập micro. Vui lòng cấp quyền trong cài đặt trình duyệt.';
-                else if (err.name === 'NotFoundError') msg = 'Không tìm thấy micro. Vui lòng kiểm tra thiết bị.';
+                if (err.name === 'NotAllowedError') msg = 'Bạn đã từ chối quyền truy cập micro.';
+                else if (err.name === 'NotFoundError') msg = 'Không tìm thấy micro.';
                 Swal.fire('Lỗi', msg, 'error');
             }
         },
@@ -445,6 +477,5 @@ function reportApp() {
     }
 }
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places"></script>
 @endpush
 @endsection

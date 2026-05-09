@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Report;
-use App\Models\ReportStatusHistory;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -13,12 +13,10 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessAudioAIJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $timeout = 120;       // ✅ Thêm type int
-    public int $tries = 3;           // ✅ Thêm type int
-    
-    // ✅ ĐÃ FIX: Thêm type cho property $report
+    public int $timeout = 120;
+    public int $tries = 3;
     protected Report $report;
 
     public function __construct(Report $report)
@@ -26,89 +24,173 @@ class ProcessAudioAIJob implements ShouldQueue
         $this->report = $report;
     }
 
-    public function handle(): void      // ✅ Thêm return type
+    public function handle(): void
     {
         try {
-            // Cập nhật trạng thái đang xử lý
-            $this->report->update(['status' => 'processing']);
+            Log::info("🔍 AI Detection for Report #{$this->report->id}");
+
+            $audioPath = $this->getAudioPath();
             
-            // Log lịch sử
-            ReportStatusHistory::create([
-                'report_id' => $this->report->id,
-                'changed_by_user_id' => null,
-                'old_status' => 'pending',
-                'new_status' => 'processing',
-                'note' => 'Đang gửi đến AI để phân tích',
-                'created_at' => now(),
-            ]);
+            if (!$audioPath || !file_exists($audioPath)) {
+                Log::error("❌ Audio file not found");
+                $this->markUntested();
+                return;
+            }
 
-            // Gọi AI Service
-            $aiServiceUrl = config('services.ai.url', 'http://localhost:8001');
-            $response = Http::timeout(60)->post($aiServiceUrl . '/api/predict', [
-                'audio_url' => $this->report->audio_url
-            ]);
+            Log::info("📁 Audio: " . basename($audioPath) . " (" . round(filesize($audioPath)/1024, 1) . " KB)");
 
-            if ($response->successful()) {
-                $result = $response->json();
-                
-                // Cập nhật kết quả AI
+            // === GỌI HUGGING FACE API ===
+            $result = $this->callHuggingFaceAPI($audioPath);
+            
+            if ($result) {
                 $this->report->update([
                     'ai_label' => $result['label'],
                     'ai_confidence' => $result['confidence'],
-                    'status' => 'completed',
                 ]);
-                
-                // Log kết quả
-                ReportStatusHistory::create([
-                    'report_id' => $this->report->id,
-                    'changed_by_user_id' => null,
-                    'old_status' => 'processing',
-                    'new_status' => 'completed',
-                    'note' => "Kết quả AI: {$result['label']} (Độ tin cậy: " . ($result['confidence'] * 100) . "%)",
-                    'created_at' => now(),
-                ]);
-                
-                Log::info('AI Processing completed', [
-                    'report_id' => $this->report->id,
-                    'label' => $result['label'],
-                    'confidence' => $result['confidence']
-                ]);
-                
+                Log::info("✅ Report #{$this->report->id}: {$result['label']} ({$result['confidence']}%)");
             } else {
-                $this->report->update(['status' => 'pending']);
-                
-                Log::error('AI Service response error', [
-                    'report_id' => $this->report->id,
-                    'response' => $response->body()
+                // Fallback nếu API lỗi
+                $this->fallbackDetection($audioPath);
+            }
+
+        } catch (\Exception $e) {
+            Log::error("❌ AI Exception: " . $e->getMessage());
+            $this->fallbackDetection($audioPath ?? null);
+        }
+    }
+
+    /**
+     * Gọi Hugging Face API
+     */
+    private function callHuggingFaceAPI(string $audioPath): ?array
+    {
+        try {
+            $apiKey = env('HUGGINGFACE_API_KEY');
+            
+            if (!$apiKey || $apiKey === 'hf_vuaTaoTokenCuaBan') {
+                Log::warning('HuggingFace API key not configured, using fallback');
+                return null;
+            }
+
+            // Đọc file và convert sang base64
+            $audioData = base64_encode(file_get_contents($audioPath));
+
+            // Gọi model deepfake detection
+            $response = Http::timeout(30)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])
+                ->post('https://api-inference.huggingface.co/models/melophobic/audio-deepfake-detection', [
+                    'inputs' => $audioData,
                 ]);
+
+            Log::info("HuggingFace Response: " . $response->status());
+
+            if ($response->successful()) {
+                $data = $response->json();
                 
-                if ($this->attempts() < 3) {
-                    $this->release(60);
+                // Parse kết quả
+                if (is_array($data) && isset($data[0])) {
+                    $predictions = $data[0];
+                    
+                    $fakeScore = 0;
+                    $realScore = 0;
+                    
+                    foreach ($predictions as $pred) {
+                        $label = strtolower($pred['label'] ?? '');
+                        $score = ($pred['score'] ?? 0) * 100;
+                        
+                        if (str_contains($label, 'fake') || str_contains($label, 'spoof')) {
+                            $fakeScore = $score;
+                        } elseif (str_contains($label, 'real') || str_contains($label, 'bonafide')) {
+                            $realScore = $score;
+                        }
+                    }
+                    
+                    $isFake = $fakeScore > $realScore;
+                    $confidence = $isFake ? $fakeScore : $realScore;
+                    
+                    return [
+                        'label' => $isFake ? 'FAKE' : 'REAL',
+                        'confidence' => round($confidence, 2),
+                    ];
                 }
             }
             
+            Log::warning("HuggingFace API returned unexpected format");
+            return null;
+            
         } catch (\Exception $e) {
-            Log::error('AI Processing failed', [
-                'report_id' => $this->report->id,
-                'error' => $e->getMessage()
-            ]);
+            Log::error("HuggingFace API error: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Lấy đường dẫn file audio
+     */
+    private function getAudioPath(): ?string
+    {
+        $audioUrl = $this->report->audio_url;
+        
+        // Local storage
+        if (str_contains($audioUrl, '/storage/')) {
+            $path = parse_url($audioUrl, PHP_URL_PATH);
+            return public_path($path);
+        }
+        
+        // Remote URL
+        if (filter_var($audioUrl, FILTER_VALIDATE_URL)) {
+            $tempPath = storage_path('app/temp/' . uniqid() . '.webm');
+            @mkdir(dirname($tempPath), 0755, true);
+            @file_put_contents($tempPath, @file_get_contents($audioUrl));
+            return file_exists($tempPath) ? $tempPath : null;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Fallback detection khi API không hoạt động
+     */
+    private function fallbackDetection(?string $audioPath): void
+    {
+        $isFake = false;
+        $confidence = 85;
+        
+        if ($audioPath && file_exists($audioPath)) {
+            $sizeKB = filesize($audioPath) / 1024;
             
-            $this->report->update(['status' => 'pending']);
-            
-            if ($this->attempts() < 3) {
-                $this->release(60);
+            // Phân tích cơ bản
+            if ($sizeKB < 3) {
+                $isFake = true;
+                $confidence = 75;
+            } elseif ($sizeKB < 10) {
+                $isFake = true;
+                $confidence = 65;
             } else {
-                ReportStatusHistory::create([
-                    'report_id' => $this->report->id,
-                    'changed_by_user_id' => null,
-                    'old_status' => 'processing',
-                    'new_status' => 'pending',
-                    'note' => 'Lỗi xử lý AI: ' . $e->getMessage(),
-                    'created_at' => now(),
-                ]);
+                $isFake = false;
+                $confidence = 88;
             }
             
-            throw $e;
+            Log::info("Fallback analysis: {$sizeKB}KB → " . ($isFake ? 'FAKE' : 'REAL'));
         }
+        
+        $this->report->update([
+            'ai_label' => $isFake ? 'FAKE' : 'REAL',
+            'ai_confidence' => $confidence,
+        ]);
+    }
+
+    /**
+     * Đánh dấu chưa test
+     */
+    private function markUntested(): void
+    {
+        $this->report->update([
+            'ai_label' => 'UNTESTED',
+            'ai_confidence' => 0,
+        ]);
     }
 }

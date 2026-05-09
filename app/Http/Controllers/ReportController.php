@@ -2,6 +2,7 @@
 // app/Http/Controllers/ReportController.php
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Log;  // ← THÊM DÒNG NÀY
 
 use App\Models\Report;
 use App\Models\IncidentCategory;
@@ -84,65 +85,50 @@ class ReportController extends Controller
         return response()->json(['success' => true, 'next_step' => 4]);
     }
 
-    public function storeFinal(Request $request)
-    {
-        $reportData = session('report_data', []);
-        
-        // Kiểm tra đã có đủ dữ liệu chưa
-        if (!isset($reportData['step1']) || !isset($reportData['step2']) || !isset($reportData['step3'])) {
-            return redirect()->route('reports.create')
-                ->with('error', 'Dữ liệu không đầy đủ, vui lòng thử lại');
-        }
-
-        $step1 = $reportData['step1'];
-        $step2 = $reportData['step2'];
-        $step3 = $reportData['step3'];
-
-        try {
-            // Upload audio lên Cloudinary
-            $audioPath = storage_path('app/public/' . $step3['temp_audio_path']);
-            
-            if (env('CLOUDINARY_URL') && file_exists($audioPath)) {
-                $uploadResult = Cloudinary::upload($audioPath, [
-                    'folder' => 'incident_reports',
-                    'resource_type' => 'auto',
-                ]);
-                $audioUrl = $uploadResult->getSecurePath();
-                
-                // Xóa file tạm
-                if (file_exists($audioPath)) {
-                    unlink($audioPath);
-                }
-            } else {
-                $audioUrl = asset('storage/' . $step3['temp_audio_path']);
-            }
-
-            $report = Report::create([
-                'user_id' => $step1['is_anonymous'] ? null : Auth::id(),
-                'category_id' => $step1['category_id'],
-                'audio_url' => $audioUrl,
-                'latitude' => $step2['latitude'],
-                'longitude' => $step2['longitude'],
-                'address_text' => $step2['address_text'],
-                'description' => $step1['description'],
-                'status' => 'pending',
-                'ai_label' => 'UNTESTED',
-            ]);
-
-            // Dispatch job xử lý AI
-            ProcessAudioAIJob::dispatch($report);
-
-            // Xóa session
-            session()->forget('report_data');
-
-            return redirect()->route('reports.my')
-                ->with('success', 'Báo cáo đã được gửi thành công! Hệ thống đang xử lý.');
-
-        } catch (\Exception $e) {
-            return redirect()->route('reports.create')
-                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
-        }
+  public function storeFinal(Request $request)
+{
+    $reportData = session('report_data', []);
+    
+    if (!isset($reportData['step1']) || !isset($reportData['step2']) || !isset($reportData['step3'])) {
+        return redirect()->route('reports.create')
+            ->with('error', 'Dữ liệu không đầy đủ, vui lòng thử lại');
     }
+
+    $step1 = $reportData['step1'];
+    $step2 = $reportData['step2'];
+    $step3 = $reportData['step3'];
+
+    try {
+        $audioPath = storage_path('app/public/' . $step3['temp_audio_path']);
+        $audioUrl = asset('storage/' . $step3['temp_audio_path']);
+
+        $report = Report::create([
+            'user_id' => $step1['is_anonymous'] ? null : Auth::id(),
+            'category_id' => $step1['category_id'],
+            'audio_url' => $audioUrl,
+            'latitude' => $step2['latitude'],
+            'longitude' => $step2['longitude'],
+            'address_text' => $step2['address_text'],
+            'description' => $step1['description'],
+            'status' => 'pending',
+            'ai_label' => 'PROCESSING', // ← Đánh dấu đang xử lý
+            'ai_confidence' => null,
+        ]);
+
+        // ✅ Dispatch job xử lý AI
+        ProcessAudioAIJob::dispatch($report);
+
+        session()->forget('report_data');
+
+        return redirect()->route('reports.my')
+            ->with('success', 'Báo cáo đã được gửi! Hệ thống AI đang phân tích giọng nói...');
+
+    } catch (\Exception $e) {
+        Log::error('Store report error: ' . $e->getMessage());
+        return redirect()->route('reports.create')
+            ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+    }
+}
 
     public function userReports()
     {
