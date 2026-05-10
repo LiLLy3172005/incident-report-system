@@ -197,6 +197,9 @@
                         <a href="{{ route('reports.my') }}" class="nav-link text-white/90 hover:text-white text-sm">
                             📋 Lịch sử
                         </a>
+                        <a href="{{ route('heatmap') }}" class="nav-link text-white/90 hover:text-white text-sm">
+                             🔥 Bản đồ nhiệt
+                        </a>
                         
                         {{-- === ADMIN LINK NỔI BẬT === --}}
                         @if(auth()->user()->role === 'admin')

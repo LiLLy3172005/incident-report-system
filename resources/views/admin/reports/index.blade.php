@@ -4,11 +4,16 @@
 
 @section('content')
 <div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">📋 Quản lý báo cáo</h1>
+   <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">📋 Quản lý báo cáo</h1>
+    <div class="flex gap-3">
         <span class="text-sm text-gray-500">{{ $reports->total() }} báo cáo</span>
+        <a href="{{ route('admin.reports.export') }}" 
+           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+            📥 Export CSV
+        </a>
     </div>
-
+</div>
     <!-- Filter Bar -->
     <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
         <form method="GET" class="grid grid-cols-2 md:grid-cols-5 gap-3">

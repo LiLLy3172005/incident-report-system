@@ -7,6 +7,7 @@
     <title>@yield('title', 'Admin') - Hệ thống Báo cáo Sự cố</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body class="bg-gray-100 font-sans">
     <div class="flex h-screen">
@@ -26,6 +27,10 @@
                 </a>
                 <a href="{{ route('home') }}" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 transition">
                     🏠 Về trang chủ
+                </a>
+                <a href="{{ route('admin.users.index') }}" 
+                   class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('admin.users.*') ? 'bg-gray-800' : '' }}">
+                    👥 Quản lý người dùng
                 </a>
             </nav>
             
