@@ -12,11 +12,17 @@ use App\Http\Controllers\Api\ReportApiController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\HeatmapController;
+use App\Http\Controllers\CommunityController;
+use App\Http\Controllers\Admin\CommunityController as AdminCommunityController;
 // Breeze auth routes
 require __DIR__.'/auth.php';
 
 // Trang chủ
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::get('/community', [CommunityController::class, 'index'])->name('community.index');
+Route::get('/community/{post}', [CommunityController::class, 'show'])->name('community.show');
+
 
 // Report routes (cần đăng nhập)
 Route::middleware(['auth'])->group(function () {
@@ -32,6 +38,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/heatmap', [App\Http\Controllers\HeatmapController::class, 'index'])->name('heatmap');
 
+   Route::post('/community', [CommunityController::class, 'store'])->name('community.store');
+    Route::post('/community/{post}/comment', [CommunityController::class, 'comment'])->name('community.comment');
+    Route::post('/community/{post}/like', [CommunityController::class, 'like'])->name('community.like');
+    
 });
 
 // Auth routes (guest)
@@ -40,6 +50,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store']);
     Route::get('/register', function () { return view('auth.register'); })->name('register');
     Route::post('/register', [RegisteredUserController::class, 'store']);
+ 
+
 });
 
 // Logout
@@ -63,8 +75,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/users/{id}/reset-strikes', [UserController::class, 'resetStrikes'])->name('users.reset-strikes');
 
     Route::get('/heatmap', [App\Http\Controllers\HeatmapController::class, 'index'])->name('heatmap');
-
-
+     
+        Route::get('/community', [AdminCommunityController::class, 'index'])->name('community.pending');
+    Route::post('/community/{post}/approve', [AdminCommunityController::class, 'approve'])->name('community.approve');
+    Route::post('/community/{post}/reject', [AdminCommunityController::class, 'reject'])->name('community.reject');
+    Route::delete('/community/{post}', [AdminCommunityController::class, 'destroy'])->name('community.destroy');
 });
 
 // API routes

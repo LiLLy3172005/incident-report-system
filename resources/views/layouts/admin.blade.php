@@ -32,6 +32,10 @@
                    class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('admin.users.*') ? 'bg-gray-800' : '' }}">
                     👥 Quản lý người dùng
                 </a>
+<a href="{{ route('admin.community.pending') }}" 
+   class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 transition {{ request()->routeIs('admin.community.*') ? 'bg-gray-800' : '' }}">
+    📰 Kiểm duyệt bài đăng
+</a>
             </nav>
             
             <!-- ⚠️ FORM LOGOUT TRONG SIDEBAR -->

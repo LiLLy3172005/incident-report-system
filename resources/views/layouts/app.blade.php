@@ -125,9 +125,19 @@
         
         .nav-link:hover::after { width: 100%; }
         
+        /* Community link đặc biệt */
+        .nav-link-community {
+            color: #34d399 !important; /* Màu xanh lá nổi bật */
+            font-weight: 700;
+        }
+        
+        .nav-link-community::after {
+            background-color: #34d399 !important;
+        }
+        
         /* Admin link đặc biệt */
         .nav-link-admin {
-            color: #fbbf24 !important; /* Màu vàng gold cho Admin */
+            color: #fbbf24 !important;
             font-weight: 700;
         }
         
@@ -189,7 +199,13 @@
                 </a>
                 
                 <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center space-x-8">
+                <div class="hidden md:flex items-center space-x-6">
+                    {{-- === COMMUNITY LINK (hiển thị cho tất cả) === --}}
+                    <a href="{{ route('community.index') }}" 
+                       class="nav-link nav-link-community text-sm flex items-center gap-1">
+                        <span>👥</span> Cộng đồng
+                    </a>
+                    
                     @auth
                         <a href="{{ route('reports.create') }}" class="nav-link text-white/90 hover:text-white text-sm">
                             📝 Gửi báo cáo
@@ -201,7 +217,6 @@
                              🔥 Bản đồ nhiệt
                         </a>
                         
-                        {{-- === ADMIN LINK NỔI BẬT === --}}
                         @if(auth()->user()->role === 'admin')
                             <a href="{{ route('admin.dashboard') }}" 
                                class="nav-link nav-link-admin text-sm flex items-center gap-1">
@@ -250,14 +265,23 @@
                                         @endif
                                     </div>
                                     
+                                    {{-- === COMMUNITY LINK TRONG DROPDOWN === --}}
+                                    <a href="{{ route('community.index') }}" class="flex items-center px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 transition font-medium">
+                                        <span class="mr-3 text-lg">👥</span> Cộng đồng
+                                    </a>
+                                    
+                                    <div class="border-t border-gray-100 my-1"></div>
+                                    
                                     <a href="{{ route('reports.my') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition font-medium">
                                         <span class="mr-3 text-lg">📋</span> Lịch sử báo cáo
                                     </a>
                                     <a href="{{ route('reports.create') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition font-medium">
                                         <span class="mr-3 text-lg">📝</span> Gửi báo cáo mới
                                     </a>
+                                    <a href="{{ route('heatmap') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition font-medium">
+                                        <span class="mr-3 text-lg">🔥</span> Bản đồ nhiệt
+                                    </a>
                                     
-                                    {{-- === ADMIN MENU TRONG DROPDOWN === --}}
                                     @if(auth()->user()->role === 'admin')
                                         <div class="border-t border-gray-100 mt-1 pt-1">
                                             <div class="px-4 py-1 text-[10px] text-gray-400 uppercase tracking-wider font-bold">Admin Panel</div>
@@ -267,6 +291,9 @@
                                             <a href="{{ route('admin.reports.index') }}" class="flex items-center px-4 py-2.5 text-sm text-yellow-600 hover:bg-yellow-50 transition font-medium">
                                                 <span class="mr-3 text-lg">📋</span> Quản lý báo cáo
                                             </a>
+                                          <a href="{{ route('admin.community.pending') }}" class="flex items-center px-4 py-2.5 text-sm text-yellow-600 hover:bg-yellow-50 transition font-medium">
+                                                <span class="mr-3 text-lg">📰</span> Kiểm duyệt bài đăng
+                                          </a>
                                         </div>
                                     @endif
                                     
@@ -281,6 +308,9 @@
                             </div>
                         </div>
                     @else
+                        <a href="{{ route('community.index') }}" class="text-green-400 hover:text-green-300 text-sm font-heading tracking-normal transition mr-2">
+                            👥 Cộng đồng
+                        </a>
                         <a href="{{ route('login') }}" class="text-white/90 hover:text-white text-sm font-heading tracking-normal transition">
                             Đăng nhập
                         </a>
@@ -322,7 +352,6 @@
     </footer>
     
     <script>
-        // Auto hide flash messages
         setTimeout(() => {
             const alerts = document.querySelectorAll('.fixed.top-20');
             alerts.forEach(alert => {
